@@ -10,6 +10,6 @@ SET FREEIMAGEINC=%FREEIMAGEPATH%\Dist\x64
 
 COPY %SDLLIBS%\SDL2.dll .\SDL2.dll
 COPY %FREEIMAGELIBS%\FreeImage.dll .\FreeImage.dll
-CL /c /I . /I %SDLINC% /I %FREEIMAGEINC% ..\*.c
+CL /c /I %SDLINC% /I %FREEIMAGEINC% ..\*.c
 LINK %SDLLIBS%\*.lib %FREEIMAGELIBS%\*.lib shell32.lib *.obj /SUBSYSTEM:CONSOLE /OUT:anime.exe
 DEL *.obj

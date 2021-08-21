@@ -15,7 +15,7 @@ typedef struct _AnimExtractorTexture {
 } AnimExtractorTexture;
 
 int AnimExtractorInit();
-AnimExtractorWindow * AnimExtractorCreateWindow(const wchar_t * name, int x, int y, int w, int h);
+AnimExtractorWindow * AnimExtractorCreateWindow(const char * name, int x, int y, int w, int h);
 void AnimExtractorDestroyWindow(AnimExtractorWindow * win);
 AnimExtractorImage * AnimExtractorLoadImage(wchar_t * path);
 int AnimExtractorUpdateMainWindow(AnimExtractorWindow * main);
