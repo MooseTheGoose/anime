@@ -1,0 +1,5 @@
+Steps to Make the App on Mac OS
+
+1) Learn Swift and SwiftUI
+2) Cry because I have to reimplement this
+3) Get over myself and reimplement it

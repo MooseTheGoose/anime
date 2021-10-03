@@ -1,0 +1,7 @@
+Steps to Make the Program in Linux
+
+1) Learn GTK+
+2) Cry because I have to reimplement it again
+3) Ponder whether I should reimplement it because I could care less about Linux
+4) Realize that Mac OS development sucks infinitely times more and cry more
+5) Get over myself and implement it anyways because at least it's not as bad as Mac OS
