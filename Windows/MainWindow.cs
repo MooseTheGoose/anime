@@ -29,6 +29,10 @@ namespace AnimationExtractor
         private double zoom = 1.0;
         private double zoomSensitivity = 1.0 / 1000.0;
 
+        private readonly string ProjectFilterString = "XML files (*.xml)|*.xml";
+        private readonly string ImportImageFilterString = "PNG files (*.png)|*.png|GIF files (*.gif)|*.gif|All files (*.*)|*.*";
+        private readonly string ExportImageFilterString = "PNG files (*.png)|*.png";
+
         private DispatcherTimer animationTimer;
         private int index = 0;
 
@@ -281,12 +285,9 @@ namespace AnimationExtractor
             pdata.ImagePath = fname;
         }
 
-        /* More parameters to come... */
-        private void SaveAnimation(string fname)
+        private void SaveAnimation(string fname, int width, int height)
         {
             FrameData[] fdarray = pdata.Frames.ToArray();
-            int width = (int)Math.Sqrt(fdarray.Length);
-            int height = (fdarray.Length + width - 1) / width;
             DrawingVisual vis = new DrawingVisual();
             using (DrawingContext ctx = vis.RenderOpen())
             {
@@ -314,6 +315,7 @@ namespace AnimationExtractor
         {
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.Multiselect = false;
+            dialog.Filter = ImportImageFilterString;
             if(dialog.ShowDialog() ?? false)
             {
                 try
@@ -334,16 +336,25 @@ namespace AnimationExtractor
         private void MenuExportImage_Click(object sender, RoutedEventArgs e)
         {
             SaveFileDialog dialog = new SaveFileDialog();
-            if(dialog.ShowDialog() ?? false)
+            dialog.Filter = ExportImageFilterString;
+            if (pdata.Frames.Count <= 0)
             {
-                try
+                MessageBox.Show("Cannot export animation with 0 frames");
+            }
+            else if(dialog.ShowDialog() ?? false)
+            {
+                AnimationSaveDialog animDialog = new AnimationSaveDialog(pdata.Frames.Count);
+                if (animDialog.ShowDialog() ?? false)
                 {
-                    SaveAnimation(dialog.FileName);
-                    MessageBox.Show("File Saved!");
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
+                    try
+                    {
+                        SaveAnimation(dialog.FileName, animDialog.AnimationWidth, animDialog.AnimationHeight);
+                        MessageBox.Show("File Saved!");
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message);
+                    }
                 }
             }
         }
@@ -351,6 +362,7 @@ namespace AnimationExtractor
         private void MenuSaveProject_Click(object sender, RoutedEventArgs e)
         {
             SaveFileDialog dialog = new SaveFileDialog();
+            dialog.Filter = ProjectFilterString;
             if (dialog.ShowDialog() ?? false)
             {
                 try
@@ -369,6 +381,7 @@ namespace AnimationExtractor
         {
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.Multiselect = false;
+            dialog.Filter = ProjectFilterString;
             if (dialog.ShowDialog() ?? false)
             {
                 try
@@ -399,7 +412,7 @@ namespace AnimationExtractor
 
         private void MenuQuit_Click(object sender, RoutedEventArgs e)
         {
-            this.Close();
+            Close();
         }
     }
 }

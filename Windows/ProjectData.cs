@@ -38,10 +38,10 @@ namespace AnimationExtractor
 
             SelectedRectFillBrush = Brushes.Red;
             SelectedRectStrokeBrush = Brushes.OrangeRed;
-            SelectedInfoBrush = Brushes.White;
+            SelectedInfoBrush = Brushes.LightGray;
             DeselectedRectFillBrush = Brushes.MediumBlue;
             DeselectedRectStrokeBrush = Brushes.Blue;
-            DeselectedInfoBrush = Brushes.LightGray;
+            DeselectedInfoBrush = Brushes.White;
             RectOpacity = 0.5;
 
             Frames = new List<FrameData>();
