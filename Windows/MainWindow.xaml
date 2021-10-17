@@ -38,7 +38,8 @@
             <ScrollViewer x:Name="sourceScroller" HorizontalScrollBarVisibility="Visible" 
                     PreviewMouseWheel="SourceScroller_CtrlScrollZoomFunction"
                     KeyDown="SourceScroller_KeyDownFunction">
-                <Canvas x:Name="sourceCanvas" MouseRightButtonDown="SourceCanvas_MouseRightDownAddRect">
+                <Canvas x:Name="sourceCanvas" MouseRightButtonDown="SourceCanvas_MouseRightDownAddRect" MouseLeftButtonDown="SourceCanvas_MouseLeftDownSelectRect"
+                        MouseMove="SourceCanvas_MouseMoveSelect" MouseLeftButtonUp="SourceCanvas_MouseLeftUpCompleteSelect">
                     <Image x:Name="sourceImage" Stretch="None" Canvas.ZIndex="-1" />
                 </Canvas>
             </ScrollViewer>

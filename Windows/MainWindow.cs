@@ -24,6 +24,7 @@ namespace AnimationExtractor
     {
         private ProjectData pdata;
         private BitmapImage savedBitmap;
+        private Rectangle boxSelect;
         private bool moveSelectedWithMouse = false;
         private Point mouseOfs;
         private double zoom = 1.0;
@@ -50,6 +51,13 @@ namespace AnimationExtractor
             animationTimer.Tick += AnimationTimerTick;
             animationTimer.Tag = animationDisplay;
             animationTimer.Start();
+
+            boxSelect = new Rectangle();
+            boxSelect.Visibility = Visibility.Hidden;
+            boxSelect.Stroke = Brushes.Green;
+            boxSelect.Fill = Brushes.Green;
+            boxSelect.Opacity = 0.5;
+            sourceCanvas.Children.Add(boxSelect);
         }
 
         private void MainWindow_Closing(object sender, CancelEventArgs e)
@@ -166,6 +174,59 @@ namespace AnimationExtractor
             }
         }
 
+        private void SourceCanvas_MouseLeftDownSelectRect(object sender, MouseButtonEventArgs e)
+        {
+            Canvas c = sender as Canvas;
+            mouseOfs = e.GetPosition(c);
+            if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift))
+            {
+                c.CaptureMouse();
+                Canvas.SetLeft(boxSelect, mouseOfs.X);
+                Canvas.SetTop(boxSelect, mouseOfs.Y);
+                boxSelect.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                foreach (FrameData data in pdata.Frames)
+                {
+                    pdata.DeselectFrame(data);
+                }
+            }
+            e.Handled = true;
+        }
+
+        private void SourceCanvas_MouseLeftUpCompleteSelect(object sender, MouseButtonEventArgs e)
+        {
+            if (boxSelect.Visibility == Visibility.Visible)
+            {
+                bool ctrlPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+                foreach (FrameData data in pdata.Frames)
+                {
+                    if (!ctrlPressed)
+                    {
+                        pdata.DeselectFrame(data);
+                    }
+                    Rect fdrect = new Rect(Canvas.GetLeft(data.WinRect), Canvas.GetTop(data.WinRect), data.WinRect.Width, data.WinRect.Height);
+                    Rect boxrect = new Rect(Canvas.GetLeft(boxSelect), Canvas.GetTop(boxSelect), boxSelect.Width, boxSelect.Height);
+                    if (fdrect.IntersectsWith(boxrect))
+                    {
+                        pdata.SelectFrame(data);
+                    }
+                }
+                boxSelect.Visibility = Visibility.Hidden;
+            }
+            (sender as Canvas).ReleaseMouseCapture();
+        }
+
+        private void SourceCanvas_MouseMoveSelect(object sender, MouseEventArgs e)
+        {
+            Point currMouse = e.GetPosition(sender as Canvas);
+            Canvas.SetLeft(boxSelect, Math.Min(currMouse.X, mouseOfs.X));
+            Canvas.SetTop(boxSelect, Math.Min(currMouse.Y, mouseOfs.Y));
+            boxSelect.Width = Math.Abs(currMouse.X - mouseOfs.X);
+            boxSelect.Height = Math.Abs(currMouse.Y - mouseOfs.Y);
+        }
+
         private void SourceRectangle_MouseLeftButtonDownFunction(object sender, MouseButtonEventArgs e)
         {
             FrameData frame = (sender as Rectangle).Tag as FrameData;
@@ -173,26 +234,30 @@ namespace AnimationExtractor
             mouseOfs = e.GetPosition(c);
             mouseOfs.X /= savedBitmap.Width;
             mouseOfs.Y /= savedBitmap.Height;
-            frame.WinRect.CaptureMouse();
-            moveSelectedWithMouse = true;
-            if(Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
+
+            if (!Keyboard.IsKeyDown(Key.LeftShift) && !Keyboard.IsKeyDown(Key.RightAlt))
             {
-                pdata.SelectFrame(frame, !frame.Selected);
-                moveSelectedWithMouse = false;
-            }
-            else if(!frame.Selected)
-            {
-                foreach(FrameData fd in pdata.Frames)
+                frame.WinRect.CaptureMouse();
+                moveSelectedWithMouse = true;
+                if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
                 {
-                    pdata.DeselectFrame(fd);                    
+                    pdata.SelectFrame(frame, !frame.Selected);
+                    moveSelectedWithMouse = false;
                 }
-                pdata.SelectFrame(frame);
+                else if (!frame.Selected)
+                {
+                    foreach (FrameData fd in pdata.Frames)
+                    {
+                        pdata.DeselectFrame(fd);
+                    }
+                    pdata.SelectFrame(frame);
+                }
+                foreach (FrameData fd in pdata.Frames)
+                {
+                    fd.ResetPrevLeftTop();
+                }
+                e.Handled = true;
             }
-            foreach(FrameData fd in pdata.Frames)
-            {
-                fd.ResetPrevLeftTop();
-            }
-            e.Handled = true;
         }
 
         private void SourceRectangle_MouseLeftButtonUpFunction(object sender, MouseButtonEventArgs e)
@@ -205,11 +270,11 @@ namespace AnimationExtractor
 
         private void SourceRectangle_MouseMoveFunction(object sender, MouseEventArgs e)
         {
-            if(moveSelectedWithMouse)
+            Canvas c = (sender as Rectangle).Parent as Canvas;
+            Point mousePos = e.GetPosition(c);
+            if (moveSelectedWithMouse)
             {
-                Canvas c = (sender as Rectangle).Parent as Canvas;
-                Point mousePos = e.GetPosition(c);
-                foreach(FrameData fd in pdata.Frames.Where(data => data.Selected))
+                foreach (FrameData fd in pdata.Frames.Where(data => data.Selected))
                 {
                     double normalX = fd.PrevLeft / savedBitmap.Width + mousePos.X / savedBitmap.Width - mouseOfs.X;
                     double normalY = fd.PrevTop / savedBitmap.Height + mousePos.Y / savedBitmap.Height - mouseOfs.Y;
@@ -264,9 +329,12 @@ namespace AnimationExtractor
 
             AddFrameData(newdata, c);
 
-            foreach(FrameData fd in pdata.Frames)
+            if (!Keyboard.IsKeyDown(Key.RightCtrl) && !Keyboard.IsKeyDown(Key.LeftCtrl))
             {
-                pdata.DeselectFrame(fd);
+                foreach (FrameData fd in pdata.Frames)
+                {
+                    pdata.DeselectFrame(fd);
+                }
             }
             pdata.SelectFrame(newdata);
         }
