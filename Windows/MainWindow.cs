@@ -46,7 +46,7 @@ namespace AnimationExtractor
             frameHeightText.Text = pdata.FrameHeight.ToString();
             animationTimeText.Text = pdata.AnimationTimeMs.ToString();
 
-            animationTimer = new DispatcherTimer();
+            animationTimer = new DispatcherTimer(DispatcherPriority.Send);
             animationTimer.Interval = new TimeSpan(pdata.AnimationTimeMs * ProjectData.MsToTicks);
             animationTimer.Tick += AnimationTimerTick;
             animationTimer.Tag = animationDisplay;
