@@ -25,8 +25,14 @@ namespace AnimationExtractor
         public Brush DeselectedRectFillBrush;
         public Brush SelectedRectStrokeBrush;
         public Brush DeselectedRectStrokeBrush;
+        public Brush SelectedSkipRectFillBrush;
+        public Brush DeselectedSkipRectFillBrush;
+        public Brush SelectedSkipRectStrokeBrush;
+        public Brush DeselectedSkipRectStrokeBrush;
         public Brush SelectedInfoBrush;
         public Brush DeselectedInfoBrush;
+        public Brush BoxSelectFill;
+        public Brush BoxSelectStroke;
         public double RectOpacity;
 
         public void InitializeDefaults()
@@ -38,10 +44,16 @@ namespace AnimationExtractor
 
             SelectedRectFillBrush = Brushes.Red;
             SelectedRectStrokeBrush = Brushes.OrangeRed;
-            SelectedInfoBrush = Brushes.LightGray;
             DeselectedRectFillBrush = Brushes.MediumBlue;
             DeselectedRectStrokeBrush = Brushes.Blue;
+            SelectedSkipRectFillBrush = Brushes.Green;
+            SelectedSkipRectStrokeBrush = Brushes.DarkGreen;
+            DeselectedSkipRectFillBrush = Brushes.Violet;
+            DeselectedSkipRectStrokeBrush = Brushes.BlueViolet;
+            SelectedInfoBrush = Brushes.LightGray;
             DeselectedInfoBrush = Brushes.White;
+            BoxSelectFill = Brushes.Yellow;
+            BoxSelectStroke = Brushes.YellowGreen;
             RectOpacity = 0.5;
 
             Frames = new List<FrameData>();
@@ -151,22 +163,48 @@ namespace AnimationExtractor
             InitializeDefaults();
         }
 
+        public void RecolorFrame(FrameData data)
+        {
+            if (data.Selected)
+            {
+                data.InfoPanel.Background = SelectedInfoBrush;
+                if (data.Skip)
+                {
+                    data.WinRect.Stroke = SelectedSkipRectStrokeBrush;
+                    data.WinRect.Fill = SelectedSkipRectFillBrush;
+                }
+                else 
+                {
+                    data.WinRect.Stroke = SelectedRectStrokeBrush;
+                    data.WinRect.Fill = SelectedRectFillBrush;
+                }
+            }
+            else
+            {
+                data.InfoPanel.Background = DeselectedInfoBrush;
+                if (data.Skip)
+                {
+                    data.WinRect.Stroke = DeselectedSkipRectStrokeBrush;
+                    data.WinRect.Fill = DeselectedSkipRectFillBrush;
+                }
+                else
+                {
+                    data.WinRect.Stroke = DeselectedRectStrokeBrush;
+                    data.WinRect.Fill = DeselectedRectFillBrush;
+                }
+            }
+        }
+
         public void SelectFrame(FrameData data)
         {
-            data.WinRect.Stroke = SelectedRectStrokeBrush;
-            data.WinRect.Fill = SelectedRectFillBrush;
-            data.WinRect.Opacity = RectOpacity;
-            data.InfoPanel.Background = SelectedInfoBrush;
             data.Selected = true;
+            RecolorFrame(data);
         }
 
         public void DeselectFrame(FrameData data)
         {
-            data.WinRect.Stroke = DeselectedRectStrokeBrush;
-            data.WinRect.Fill = DeselectedRectFillBrush;
-            data.WinRect.Opacity = RectOpacity;
-            data.InfoPanel.Background = DeselectedInfoBrush;
             data.Selected = false;
+            RecolorFrame(data);
         }
         public void SelectFrame(FrameData data, bool truth)
         {
@@ -183,10 +221,14 @@ namespace AnimationExtractor
         public void SkipFrame(FrameData data)
         {
             data.Skip = true;
+            data.SkipButton.Content = "Unskip";
+            RecolorFrame(data);
         }
         public void DisableSkipFrame(FrameData data)
         {
             data.Skip = false;
+            data.SkipButton.Content = "Skip";
+            RecolorFrame(data);
         }
 
         public void SkipFrame(FrameData data, bool truth)
@@ -204,6 +246,7 @@ namespace AnimationExtractor
         public FrameData AddFrame()
         {
             FrameData data = new FrameData();
+            data.WinRect.Opacity = RectOpacity;
             SelectFrame(data);
             DisableSkipFrame(data);
             Frames.Add(data);

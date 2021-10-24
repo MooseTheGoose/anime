@@ -36,7 +36,6 @@ namespace AnimationExtractor
 
         private DispatcherTimer animationTimer;
         private int index = 0;
-
         public MainWindow()
         {
             InitializeComponent();
@@ -54,9 +53,9 @@ namespace AnimationExtractor
 
             boxSelect = new Rectangle();
             boxSelect.Visibility = Visibility.Hidden;
-            boxSelect.Stroke = Brushes.Green;
-            boxSelect.Fill = Brushes.Green;
-            boxSelect.Opacity = 0.5;
+            boxSelect.Opacity = pdata.RectOpacity;
+            boxSelect.Fill = pdata.BoxSelectFill;
+            boxSelect.Stroke = pdata.BoxSelectStroke;
             sourceCanvas.Children.Add(boxSelect);
         }
 
@@ -174,11 +173,48 @@ namespace AnimationExtractor
             }
         }
 
+        private bool ToggleShortcut()
+        {
+            return Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
+        }
+
+        private bool AggregateShortcut()
+        {
+            return (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)) && Keyboard.IsKeyDown(Key.A);
+        }
+
+        private bool SkipShortcut() 
+        {
+            return (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)) && Keyboard.IsKeyDown(Key.S);
+        }
+
+        private bool DeleteShortcut()
+        {
+            return (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)) && Keyboard.IsKeyDown(Key.D);
+        }
+
+        private void SelectOrSkipFrame(FrameData data, bool truth)
+        {
+            if (SkipShortcut())
+            {
+                pdata.SkipFrame(data, truth);
+            }
+            else
+            {
+                pdata.SelectFrame(data, truth);
+            }
+        }
+
+        private void SelectOrSkipFrame(FrameData data)
+        {
+            SelectOrSkipFrame(data, true);
+        }
+
         private void SourceCanvas_MouseLeftDownSelectRect(object sender, MouseButtonEventArgs e)
         {
             Canvas c = sender as Canvas;
             mouseOfs = e.GetPosition(c);
-            if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift))
+            if (AggregateShortcut())
             {
                 c.CaptureMouse();
                 Canvas.SetLeft(boxSelect, mouseOfs.X);
@@ -189,7 +225,7 @@ namespace AnimationExtractor
             {
                 foreach (FrameData data in pdata.Frames)
                 {
-                    pdata.DeselectFrame(data);
+                    SelectOrSkipFrame(data, false);
                 }
             }
             e.Handled = true;
@@ -199,18 +235,26 @@ namespace AnimationExtractor
         {
             if (boxSelect.Visibility == Visibility.Visible)
             {
-                bool ctrlPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
-                foreach (FrameData data in pdata.Frames)
+                bool doDelete = DeleteShortcut();
+                bool doDeselect = !doDelete && !ToggleShortcut();
+                foreach (FrameData data in pdata.Frames.ToArray())
                 {
-                    if (!ctrlPressed)
+                    if (doDeselect)
                     {
-                        pdata.DeselectFrame(data);
+                        SelectOrSkipFrame(data, false);
                     }
                     Rect fdrect = new Rect(Canvas.GetLeft(data.WinRect), Canvas.GetTop(data.WinRect), data.WinRect.Width, data.WinRect.Height);
                     Rect boxrect = new Rect(Canvas.GetLeft(boxSelect), Canvas.GetTop(boxSelect), boxSelect.Width, boxSelect.Height);
                     if (fdrect.IntersectsWith(boxrect))
                     {
-                        pdata.SelectFrame(data);
+                        if (doDelete)
+                        {
+                            RemoveFrameData(data);
+                        }
+                        else
+                        {
+                            SelectOrSkipFrame(data);
+                        }
                     }
                 }
                 boxSelect.Visibility = Visibility.Hidden;
@@ -235,26 +279,34 @@ namespace AnimationExtractor
             mouseOfs.X /= savedBitmap.Width;
             mouseOfs.Y /= savedBitmap.Height;
 
-            if (!Keyboard.IsKeyDown(Key.LeftShift) && !Keyboard.IsKeyDown(Key.RightAlt))
+            if (!AggregateShortcut())
             {
-                frame.WinRect.CaptureMouse();
-                moveSelectedWithMouse = true;
-                if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
+                if (DeleteShortcut())
                 {
-                    pdata.SelectFrame(frame, !frame.Selected);
-                    moveSelectedWithMouse = false;
+                    RemoveFrameData(frame);
                 }
-                else if (!frame.Selected)
+                else
                 {
+                    bool concern = SkipShortcut() ? frame.Skip : frame.Selected;
+                    frame.WinRect.CaptureMouse();
+                    moveSelectedWithMouse = true;
+                    if (ToggleShortcut())
+                    {
+                        SelectOrSkipFrame(frame, !concern);
+                        moveSelectedWithMouse = false;
+                    }
+                    else if (!concern)
+                    {
+                        foreach (FrameData fd in pdata.Frames)
+                        {
+                            SelectOrSkipFrame(fd, false);
+                        }
+                        SelectOrSkipFrame(frame);
+                    }
                     foreach (FrameData fd in pdata.Frames)
                     {
-                        pdata.DeselectFrame(fd);
+                        fd.ResetPrevLeftTop();
                     }
-                    pdata.SelectFrame(frame);
-                }
-                foreach (FrameData fd in pdata.Frames)
-                {
-                    fd.ResetPrevLeftTop();
                 }
                 e.Handled = true;
             }
@@ -303,16 +355,7 @@ namespace AnimationExtractor
                 RemoveFrameData(newdata);
             };
             newdata.SkipButton.Click += (object sender, RoutedEventArgs e) => {
-                if (newdata.Skip)
-                {
-                    pdata.DisableSkipFrame(newdata);
-                    newdata.SkipButton.Content = "Skip";
-                }
-                else
-                {
-                    pdata.SkipFrame(newdata);
-                    newdata.SkipButton.Content = "Use";
-                }
+                pdata.SkipFrame(newdata, !newdata.Skip);
             };
 
             c.Children.Add(newdata.WinRect);
