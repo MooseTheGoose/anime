@@ -1,6 +1,7 @@
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
 using System.Windows.Shapes;
 using System.Windows.Media;
+using System.Windows;
 
 namespace AnimationExtractor
 {
@@ -16,6 +17,10 @@ namespace AnimationExtractor
         public bool Skip;
         public TextBox TextX;
         public TextBox TextY;
+        public Button XUp;
+        public Button XDown;
+        public Button YUp;
+        public Button YDown;
         public Button SkipButton;
         public Button DeleteButton;
 
@@ -35,6 +40,9 @@ namespace AnimationExtractor
        
         public FrameData()
         {
+            TextBlock LabelX;
+            TextBlock LabelY;
+
             WinRect = new Rectangle();
             InfoPanel = new DockPanel();
 
@@ -42,9 +50,13 @@ namespace AnimationExtractor
             Selected = true;
             Skip = false;
 
+            LabelX = new TextBlock();
+            LabelX.Text = " X: ";
             TextX = new TextBox();
             TextX.IsReadOnly = true;
 
+            LabelY = new TextBlock();
+            LabelY.Text = " Y: ";
             TextY = new TextBox();
             TextY.IsReadOnly = true;
 
@@ -59,14 +71,17 @@ namespace AnimationExtractor
 
             Separator sep = new Separator();
             sep.Background = Brushes.Transparent;
-
+            DockPanel.SetDock(LabelX, Dock.Left);
             DockPanel.SetDock(TextX, Dock.Left);
+            DockPanel.SetDock(LabelY, Dock.Left);
             DockPanel.SetDock(TextY, Dock.Left);
             DockPanel.SetDock(SkipButton, Dock.Right);
             DockPanel.SetDock(DeleteButton, Dock.Right);
             DockPanel.SetDock(sep, Dock.Right);
 
+            InfoPanel.Children.Add(LabelX);
             InfoPanel.Children.Add(TextX);
+            InfoPanel.Children.Add(LabelY);
             InfoPanel.Children.Add(TextY);
             InfoPanel.Children.Add(SkipButton);
             InfoPanel.Children.Add(DeleteButton);

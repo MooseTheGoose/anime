@@ -36,6 +36,34 @@ namespace AnimationExtractor
 
         private DispatcherTimer animationTimer;
         private int index = 0;
+
+        private class KeyMoveIncrementCommand : ICommand
+        {
+            public event EventHandler CanExecuteChanged;
+
+            private readonly Action<int, int> exec;
+            private readonly int deltax, deltay;
+
+            public KeyMoveIncrementCommand(Action<int, int> moveFunc, int xinc, int yinc)
+            {
+                deltax = xinc;
+                deltay = yinc;
+                exec = moveFunc;
+            }
+
+            public bool CanExecute(object parameter)
+            {
+                return true;
+            }
+
+            public void Execute(object parameter)
+            {
+                exec(deltax, deltay);
+            }
+        }
+
+        KeyMoveIncrementCommand[] holdKeyMoves;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -57,6 +85,27 @@ namespace AnimationExtractor
             boxSelect.Fill = pdata.BoxSelectFill;
             boxSelect.Stroke = pdata.BoxSelectStroke;
             sourceCanvas.Children.Add(boxSelect);
+            Action<int, int> moveAllFrames = (int deltax, int deltay) =>
+            {
+                if (savedBitmap != null)
+                {
+                    foreach (FrameData data in pdata.Frames.Where(data => data.Selected))
+                    {
+                        int newx = (int)Math.Clamp((long)data.X + deltax, int.MinValue, int.MaxValue);
+                        int newy = (int)Math.Clamp((long)data.Y + deltay, int.MinValue, int.MaxValue);
+                        SetFrameDataWithNormalizedCoords(data, (double)newx / savedBitmap.PixelWidth, (double)newy / savedBitmap.PixelHeight);
+                    }
+                }
+            };
+            holdKeyMoves = new KeyMoveIncrementCommand[4];
+            int[] xDeltas = new int[] { -1, 0, 1, 0 };
+            int[] yDeltas = new int[] { 0, 1, 0, -1 };
+            Key[] arrows = new Key[] { Key.H, Key.J, Key.L, Key.K };
+            for (int i = 0; i < 4; i += 1)
+            {
+                holdKeyMoves[i] = new KeyMoveIncrementCommand(moveAllFrames, xDeltas[i], yDeltas[i]);
+                InputBindings.Add(new KeyBinding(holdKeyMoves[i], arrows[i], ModifierKeys.Control));
+            }
         }
 
         private void MainWindow_Closing(object sender, CancelEventArgs e)
@@ -287,9 +336,9 @@ namespace AnimationExtractor
                 }
                 else
                 {
-                    bool concern = SkipShortcut() ? frame.Skip : frame.Selected;
+                    moveSelectedWithMouse = !SkipShortcut();
+                    bool concern = !moveSelectedWithMouse ? frame.Skip : frame.Selected;
                     frame.WinRect.CaptureMouse();
-                    moveSelectedWithMouse = true;
                     if (ToggleShortcut())
                     {
                         SelectOrSkipFrame(frame, !concern);
@@ -338,7 +387,7 @@ namespace AnimationExtractor
 
         private void SetFrameDataWithNormalizedCoords(FrameData fd, double normalizedX, double normalizedY)
         {
-            fd.SetNewCoords((int)(normalizedX * savedBitmap.PixelWidth), (int)(normalizedY * savedBitmap.PixelHeight));
+            fd.SetNewCoords((int)Math.Round(normalizedX * savedBitmap.PixelWidth), (int)Math.Round(normalizedY * savedBitmap.PixelHeight));
             Canvas.SetLeft(fd.WinRect, normalizedX * savedBitmap.Width);
             Canvas.SetTop(fd.WinRect, normalizedY * savedBitmap.Height);
         }
