@@ -421,7 +421,7 @@ namespace AnimationExtractor
 
             AddFrameData(newdata, c);
 
-            if (!Keyboard.IsKeyDown(Key.RightCtrl) && !Keyboard.IsKeyDown(Key.LeftCtrl))
+            if (!ToggleShortcut())
             {
                 foreach (FrameData fd in pdata.Frames)
                 {
@@ -429,6 +429,10 @@ namespace AnimationExtractor
                 }
             }
             pdata.SelectFrame(newdata);
+            if (SkipShortcut())
+            {
+                pdata.SkipFrame(newdata);
+            }
         }
 
         private void LoadNewProjectImage(string fname)
@@ -463,7 +467,7 @@ namespace AnimationExtractor
             RenderTargetBitmap texture = new RenderTargetBitmap(width * pdata.FrameWidth, height * pdata.FrameHeight, 96, 96, PixelFormats.Pbgra32);
             texture.Render(vis);
 
-            PngBitmapEncoder encoder = new PngBitmapEncoder();
+            BitmapEncoder encoder = new PngBitmapEncoder();
             encoder.Frames.Add(BitmapFrame.Create(texture));
             using (Stream stream = File.Create(fname))
             {
