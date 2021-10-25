@@ -368,7 +368,7 @@ namespace AnimationExtractor
             Point mousePos = e.GetPosition(c);
 
             FrameData newdata = pdata.AddFrame();
-            SetFrameDataWithNormalizedCoords(newdata, mousePos.X / c.Width, mousePos.Y / c.Height);
+            SetFrameDataWithNormalizedCoords(newdata, mousePos.X / savedBitmap.Width, mousePos.Y / savedBitmap.Height);
 
             AddFrameData(newdata, c);
 
