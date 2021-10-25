@@ -178,9 +178,9 @@ namespace AnimationExtractor
             return Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
         }
 
-        private bool AggregateShortcut()
+        private bool BoxShortcut()
         {
-            return (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)) && Keyboard.IsKeyDown(Key.A);
+            return (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)) && Keyboard.IsKeyDown(Key.B);
         }
 
         private bool SkipShortcut() 
@@ -214,7 +214,7 @@ namespace AnimationExtractor
         {
             Canvas c = sender as Canvas;
             mouseOfs = e.GetPosition(c);
-            if (AggregateShortcut())
+            if (BoxShortcut())
             {
                 c.CaptureMouse();
                 Canvas.SetLeft(boxSelect, mouseOfs.X);
@@ -279,7 +279,7 @@ namespace AnimationExtractor
             mouseOfs.X /= savedBitmap.Width;
             mouseOfs.Y /= savedBitmap.Height;
 
-            if (!AggregateShortcut())
+            if (!BoxShortcut())
             {
                 if (DeleteShortcut())
                 {
